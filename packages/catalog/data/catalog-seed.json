@@ -1,0 +1,103 @@
+{
+  "catalogVersion": "0.1.0",
+  "provenance": "synthetic",
+  "notice": "Fictional educational simulation profiles; not specifications for production vehicles.",
+  "warningRuleNotice": "Thresholds and event responses are fictional demo values, not service guidance or validated vehicle limits.",
+  "knowledgeBasis": "fictional_demo",
+  "rangeNotice": "All validRange, nominalRange, sampling periods, scenario values and warning/clearing thresholds are synthetic design assumptions. They are not OEM calibrations or universal normal ranges.",
+  "manufacturerEvidenceFile": "manual-observations.json",
+  "manufacturerEvidencePolicy": "Research observations are non-executable and do not validate these demo rules. Unknown OEM numeric limits remain unknown. The synthetic low-voltage indicator is not a universal OEM charging-system lamp rule.",
+  "subsystems": [
+    { "id": "powertrain.engine", "name": "Engine" },
+    { "id": "powertrain.transmission", "name": "Transmission" },
+    { "id": "vehicle.motion", "name": "Vehicle motion" },
+    { "id": "electrical.low_voltage", "name": "Low-voltage electrical" },
+    { "id": "energy.ev_battery", "name": "EV battery and energy" },
+    { "id": "brakes.abs", "name": "ABS and braking" },
+    { "id": "stability.esc", "name": "Stability control" },
+    { "id": "steering.eps", "name": "Electric power steering" },
+    { "id": "body.tires", "name": "Tires and body" },
+    { "id": "adas.driver_assistance", "name": "Driver assistance" },
+    { "id": "maintenance.service", "name": "Maintenance" }
+  ],
+  "signals": [
+    { "id": "vehicle.speed", "subsystemId": "vehicle.motion", "valueType": "number", "unit": "km/h", "validRange": [0, 240], "nominalRange": [0, 120], "updatePeriodMs": 200 },
+    { "id": "vehicle.odometer", "subsystemId": "vehicle.motion", "valueType": "number", "unit": "km", "validRange": [0, 2000000], "nominalRange": [0, 300000], "updatePeriodMs": 1000 },
+    { "id": "vehicle.trip_distance", "subsystemId": "vehicle.motion", "valueType": "number", "unit": "km", "validRange": [0, 10000], "nominalRange": [0, 500], "updatePeriodMs": 1000 },
+    { "id": "engine.rpm", "subsystemId": "powertrain.engine", "valueType": "number", "unit": "rpm", "validRange": [0, 8000], "nominalRange": [650, 6500], "updatePeriodMs": 200 },
+    { "id": "engine.coolant_temperature", "subsystemId": "powertrain.engine", "valueType": "number", "unit": "degC", "validRange": [-40, 150], "nominalRange": [75, 105], "updatePeriodMs": 1000 },
+    { "id": "engine.oil_pressure", "subsystemId": "powertrain.engine", "valueType": "number", "unit": "kPa", "validRange": [0, 1000], "nominalRange": [100, 600], "updatePeriodMs": 1000 },
+    { "id": "engine.oil_level_status", "subsystemId": "powertrain.engine", "valueType": "enum", "unit": "", "values": ["normal", "low", "unknown"], "updatePeriodMs": 5000 },
+    { "id": "engine.load", "subsystemId": "powertrain.engine", "valueType": "number", "unit": "%", "validRange": [0, 100], "nominalRange": [0, 85], "updatePeriodMs": 500 },
+    { "id": "engine.fuel_level", "subsystemId": "powertrain.engine", "valueType": "number", "unit": "%", "validRange": [0, 100], "nominalRange": [5, 100], "updatePeriodMs": 5000 },
+    { "id": "engine.fuel_rate", "subsystemId": "powertrain.engine", "valueType": "number", "unit": "L/h", "validRange": [0, 100], "nominalRange": [0, 30], "updatePeriodMs": 1000 },
+    { "id": "transmission.temperature", "subsystemId": "powertrain.transmission", "valueType": "number", "unit": "degC", "validRange": [-40, 200], "nominalRange": [40, 120], "updatePeriodMs": 1000 },
+    { "id": "electrical.system_voltage", "subsystemId": "electrical.low_voltage", "valueType": "number", "unit": "V", "validRange": [0, 20], "nominalRange": [11, 15], "updatePeriodMs": 500 },
+    { "id": "electrical.module_communication_status", "subsystemId": "electrical.low_voltage", "valueType": "enum", "unit": "", "values": ["normal", "intermittent", "lost"], "updatePeriodMs": 500 },
+    { "id": "brakes.abs_status", "subsystemId": "brakes.abs", "valueType": "enum", "unit": "", "values": ["normal", "warning", "unavailable"], "updatePeriodMs": 500 },
+    { "id": "brakes.wheel_speed_front_left", "subsystemId": "brakes.abs", "valueType": "number", "unit": "km/h", "validRange": [0, 240], "nominalRange": [0, 120], "updatePeriodMs": 100 },
+    { "id": "stability.esc_status", "subsystemId": "stability.esc", "valueType": "enum", "unit": "", "values": ["normal", "warning", "intervention"], "updatePeriodMs": 200 },
+    { "id": "steering.eps_status", "subsystemId": "steering.eps", "valueType": "enum", "unit": "", "values": ["normal", "warning", "unavailable"], "updatePeriodMs": 500 },
+    { "id": "steering.angle", "subsystemId": "steering.eps", "valueType": "number", "unit": "deg", "validRange": [-720, 720], "nominalRange": [-540, 540], "updatePeriodMs": 100 },
+    { "id": "tires.pressure_front_left", "subsystemId": "body.tires", "valueType": "number", "unit": "kPa", "validRange": [0, 500], "nominalRange": [180, 320], "updatePeriodMs": 10000 },
+    { "id": "body.door_open_count", "subsystemId": "body.tires", "valueType": "number", "unit": "count", "validRange": [0, 5], "nominalRange": [0, 1], "updatePeriodMs": 500 },
+    { "id": "body.seatbelt_driver", "subsystemId": "body.tires", "valueType": "boolean", "unit": "", "updatePeriodMs": 500 },
+    { "id": "ev.battery_state_of_charge", "subsystemId": "energy.ev_battery", "valueType": "number", "unit": "%", "validRange": [0, 100], "nominalRange": [10, 100], "updatePeriodMs": 1000 },
+    { "id": "ev.pack_temperature", "subsystemId": "energy.ev_battery", "valueType": "number", "unit": "degC", "validRange": [-40, 100], "nominalRange": [10, 45], "updatePeriodMs": 1000 },
+    { "id": "ev.pack_voltage", "subsystemId": "energy.ev_battery", "valueType": "number", "unit": "V", "validRange": [0, 1000], "nominalRange": [250, 850], "updatePeriodMs": 500 },
+    { "id": "ev.pack_current", "subsystemId": "energy.ev_battery", "valueType": "number", "unit": "A", "validRange": [-1000, 1000], "nominalRange": [-500, 500], "updatePeriodMs": 200 },
+    { "id": "ev.motor_temperature", "subsystemId": "energy.ev_battery", "valueType": "number", "unit": "degC", "validRange": [-40, 200], "nominalRange": [20, 120], "updatePeriodMs": 1000 },
+    { "id": "ev.regenerative_braking", "subsystemId": "energy.ev_battery", "valueType": "boolean", "unit": "", "updatePeriodMs": 200 },
+    { "id": "adas.blind_spot_status", "subsystemId": "adas.driver_assistance", "valueType": "enum", "unit": "", "values": ["ready", "warning", "fault", "unavailable"], "updatePeriodMs": 500 },
+    { "id": "suspension.ride_height_status", "subsystemId": "adas.driver_assistance", "valueType": "enum", "unit": "", "values": ["normal", "adjusting", "warning", "unavailable"], "updatePeriodMs": 1000 },
+    { "id": "maintenance.service_due", "subsystemId": "maintenance.service", "valueType": "boolean", "unit": "", "updatePeriodMs": 60000 }
+  ],
+  "vehicles": [
+    {
+      "id": "compact-petrol-v1",
+      "displayName": "City Compact P1",
+      "segment": "compact",
+      "powertrain": "petrol_ice",
+      "fictional": true,
+      "clusterConfigId": "cluster-compact-v1",
+      "supportedSignalIds": ["vehicle.speed", "vehicle.odometer", "vehicle.trip_distance", "engine.rpm", "engine.coolant_temperature", "engine.oil_pressure", "engine.oil_level_status", "engine.load", "engine.fuel_level", "engine.fuel_rate", "electrical.system_voltage", "electrical.module_communication_status", "brakes.abs_status", "stability.esc_status", "steering.eps_status", "body.seatbelt_driver", "body.door_open_count", "maintenance.service_due"],
+      "unsupportedSignalIds": ["transmission.temperature", "brakes.wheel_speed_front_left", "steering.angle", "tires.pressure_front_left", "ev.battery_state_of_charge", "ev.pack_temperature", "ev.pack_voltage", "ev.pack_current", "ev.motor_temperature", "ev.regenerative_braking", "adas.blind_spot_status", "suspension.ride_height_status"]
+    },
+    {
+      "id": "electric-suv-v1",
+      "displayName": "Trail Electric SUV E1",
+      "segment": "mid_size_suv",
+      "powertrain": "battery_electric",
+      "fictional": true,
+      "clusterConfigId": "cluster-ev-v1",
+      "supportedSignalIds": ["vehicle.speed", "vehicle.odometer", "vehicle.trip_distance", "electrical.system_voltage", "electrical.module_communication_status", "brakes.abs_status", "stability.esc_status", "body.door_open_count", "body.seatbelt_driver", "tires.pressure_front_left", "ev.battery_state_of_charge", "ev.pack_temperature", "ev.pack_voltage", "ev.pack_current", "ev.motor_temperature", "ev.regenerative_braking", "maintenance.service_due"],
+      "unsupportedSignalIds": ["engine.rpm", "engine.coolant_temperature", "engine.oil_pressure", "engine.oil_level_status", "engine.load", "engine.fuel_level", "engine.fuel_rate", "transmission.temperature", "brakes.wheel_speed_front_left", "steering.angle", "steering.eps_status", "adas.blind_spot_status", "suspension.ride_height_status"]
+    },
+    {
+      "id": "luxury-diesel-v1",
+      "displayName": "Grand Touring D8",
+      "segment": "luxury_sedan",
+      "powertrain": "diesel_ice",
+      "fictional": true,
+      "clusterConfigId": "cluster-luxury-v1",
+      "supportedSignalIds": ["vehicle.speed", "vehicle.odometer", "vehicle.trip_distance", "engine.rpm", "engine.coolant_temperature", "engine.oil_pressure", "engine.load", "engine.fuel_level", "engine.fuel_rate", "transmission.temperature", "electrical.system_voltage", "electrical.module_communication_status", "brakes.abs_status", "brakes.wheel_speed_front_left", "stability.esc_status", "steering.eps_status", "steering.angle", "tires.pressure_front_left", "body.door_open_count", "body.seatbelt_driver", "adas.blind_spot_status", "suspension.ride_height_status", "maintenance.service_due"],
+      "unsupportedSignalIds": ["engine.oil_level_status", "ev.battery_state_of_charge", "ev.pack_temperature", "ev.pack_voltage", "ev.pack_current", "ev.motor_temperature", "ev.regenerative_braking"]
+    }
+  ],
+  "warningRules": [
+    { "id": "warn-engine-overheat-v1", "signalId": "engine.coolant_temperature", "operator": "gte", "threshold": 115, "severity": "critical", "indicatorId": "engine.temperature", "clearBelow": 108, "profiles": ["compact-petrol-v1", "luxury-diesel-v1"] },
+    { "id": "warn-oil-pressure-v1", "signalId": "engine.oil_pressure", "operator": "lte", "threshold": 80, "severity": "critical", "indicatorId": "engine.oil_pressure", "clearAbove": 110, "profiles": ["compact-petrol-v1", "luxury-diesel-v1"] },
+    { "id": "warn-low-12v-v1", "signalId": "electrical.system_voltage", "operator": "lte", "threshold": 11.5, "severity": "warning", "indicatorId": "electrical.low_voltage", "clearAbove": 12.1, "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"] },
+    { "id": "warn-ev-pack-temperature-v1", "signalId": "ev.pack_temperature", "operator": "gte", "threshold": 55, "severity": "warning", "indicatorId": "ev.battery_temperature", "clearBelow": 48, "profiles": ["electric-suv-v1"] },
+    { "id": "warn-abs-wheel-sensor-event-v1", "eventType": "abs_wheel_sensor_fault", "condition": "event_present", "severity": "warning", "indicatorId": "brakes.abs", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"] },
+    { "id": "warn-module-communication-event-v1", "eventType": "module_communication_intermittent", "condition": "event_present", "severity": "warning", "indicatorId": "electrical.module_communication", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"] }
+  ],
+  "scenarios": [
+    { "id": "normal-idle-v1", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"], "durationTicks": 120, "tickDurationMs": 1000, "actions": [] },
+    { "id": "engine-overheat-v1", "profiles": ["compact-petrol-v1", "luxury-diesel-v1"], "durationTicks": 60, "tickDurationMs": 1000, "actions": [{ "atTick": 10, "type": "ramp_signal", "signalId": "engine.coolant_temperature", "from": 90, "to": 125, "overTicks": 35 }] },
+    { "id": "low-oil-pressure-v1", "profiles": ["compact-petrol-v1", "luxury-diesel-v1"], "durationTicks": 40, "tickDurationMs": 1000, "actions": [{ "atTick": 8, "type": "set_signal", "signalId": "engine.oil_pressure", "value": 55 }] },
+    { "id": "low-12v-voltage-v1", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"], "durationTicks": 40, "tickDurationMs": 1000, "actions": [{ "atTick": 8, "type": "ramp_signal", "signalId": "electrical.system_voltage", "from": 13.8, "to": 10.9, "overTicks": 10 }, { "atTick": 20, "type": "emit_event", "eventType": "module_communication_intermittent" }] },
+    { "id": "ev-battery-temperature-v1", "profiles": ["electric-suv-v1"], "durationTicks": 50, "tickDurationMs": 1000, "actions": [{ "atTick": 10, "type": "ramp_signal", "signalId": "ev.pack_temperature", "from": 32, "to": 65, "overTicks": 25 }] },
+    { "id": "abs-wheel-sensor-v1", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"], "durationTicks": 30, "tickDurationMs": 1000, "actions": [{ "atTick": 10, "type": "emit_event", "eventType": "abs_wheel_sensor_fault" }] }
+  ]
+}
