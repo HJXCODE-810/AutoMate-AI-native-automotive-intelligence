@@ -1,0 +1,163 @@
+{
+  "schemaVersion": "0.1.0",
+  "reviewedOn": "2026-11-24",
+  "purpose": "Research observations only; not executable simulator calibration or telemetry.",
+  "sources": [
+    {
+      "id": "mahindra-xuv700-cluster-20250826",
+      "manufacturer": "Mahindra",
+      "model": "XUV700",
+      "modelYear": null,
+      "market": "India; precise applicability unresolved",
+      "language": "English",
+      "revision": null,
+      "url": "https://mvault-cloudfront.mahindra.com/2025/08/26/Owners-Manuals/XUV700/XUV700-Owners-Manual.html",
+      "retrievalStatus": "section_fetched",
+      "applicabilityStatus": "model_year_and_variant_pending"
+    },
+    {
+      "id": "honda-civic-hatchback-2025-indicators",
+      "manufacturer": "Honda",
+      "model": "Civic Hatchback",
+      "modelYear": 2025,
+      "market": "US/Canada; equipment qualifiers apply",
+      "language": "English",
+      "revision": null,
+      "url": "https://techinfo.honda.com/rjanisis/pubs/OM/AH/AT402525IOM/enu/details/131271047-3664.html",
+      "retrievalStatus": "official_indexed_excerpt_only",
+      "applicabilityStatus": "trim_and_market_qualifiers_pending"
+    },
+    {
+      "id": "hyundai-ce1-2024-ev-information",
+      "manufacturer": "Hyundai",
+      "model": "IONIQ 6 (CE1)",
+      "modelYear": 2024,
+      "market": "en_US manual edition",
+      "language": "English",
+      "revision": null,
+      "url": "https://ownersmanual.hyundai.com/full_webhelp/CE1/2024/en_US/topic_kx2_55q_t5b.html",
+      "retrievalStatus": "section_fetched",
+      "applicabilityStatus": "lamp_message_relationship_requires_review"
+    },
+    {
+      "id": "tesla-model3-live-alerts-en-lt",
+      "manufacturer": "Tesla",
+      "model": "Model 3",
+      "modelYear": null,
+      "market": "en_lt manual edition",
+      "language": "English",
+      "revision": "Live manual; exact software and model-year scope unresolved",
+      "url": "https://www.tesla.com/ownersmanual/model3/en_lt/GUID-9A3F0F72-71F4-433D-B68B-0A472A9359DF.html",
+      "retrievalStatus": "section_fetched",
+      "applicabilityStatus": "model_year_and_firmware_pending"
+    },
+    {
+      "id": "tata-nexon-ev-rev04-july2025",
+      "manufacturer": "Tata Motors",
+      "model": "Nexon EV",
+      "modelYear": null,
+      "market": "India; variant unresolved",
+      "language": "English",
+      "revision": "04 / July 2025",
+      "url": "https://ev.tatamotors.com/content/dam/tml/ev/pdf/owners-manual/nexon-ev-owner-manual.pdf",
+      "retrievalStatus": "official_indexed_excerpt_only",
+      "applicabilityStatus": "cluster_and_variant_pending"
+    }
+  ],
+  "observations": [
+    {
+      "id": "obs-mahindra-coolant-flashing",
+      "sourceId": "mahindra-xuv700-cluster-20250826",
+      "locator": "3.20.29 High Engine Coolant Temperature Warning Lamp",
+      "kind": "published_numeric_behavior",
+      "summary": "The manual says flashing starts when coolant temperature reaches 113 degrees C.",
+      "publishedActivation": { "operator": "reaches", "value": 113, "unit": "degC" },
+      "publishedClearing": null,
+      "presentation": { "lampState": "flashing" },
+      "reviewStatus": "applicability_pending",
+      "executable": false
+    },
+    {
+      "id": "obs-mahindra-coolant-steady-buzzer",
+      "sourceId": "mahindra-xuv700-cluster-20250826",
+      "locator": "3.20.29 High Engine Coolant Temperature Warning Lamp",
+      "kind": "published_numeric_behavior",
+      "summary": "The manual says the warning is steady with a buzzer when temperature reaches 115 degrees C.",
+      "publishedActivation": { "operator": "reaches", "value": 115, "unit": "degC" },
+      "publishedClearing": null,
+      "presentation": { "lampState": "steady", "sound": "buzzer" },
+      "reviewStatus": "applicability_pending",
+      "executable": false
+    },
+    {
+      "id": "obs-mahindra-charging-system",
+      "sourceId": "mahindra-xuv700-cluster-20250826",
+      "locator": "3.20.28 Battery Charging System Warning Lamp",
+      "kind": "published_qualitative_behavior",
+      "summary": "Charging/alternator trouble is distinguished from ignition-on lamp behavior; the section does not specify a voltage threshold.",
+      "publishedActivation": null,
+      "publishedClearing": null,
+      "numericThresholdStatus": "not_stated_in_reviewed_section",
+      "reviewStatus": "applicability_pending",
+      "executable": false
+    },
+    {
+      "id": "obs-honda-mil-states",
+      "sourceId": "honda-civic-hatchback-2025-indicators",
+      "locator": "Indicators: Malfunction Indicator Lamp",
+      "kind": "published_qualitative_behavior",
+      "summary": "An emissions fault can illuminate the MIL; engine misfire can cause flashing. Startup/readiness behavior needs separate treatment.",
+      "publishedActivation": null,
+      "publishedClearing": null,
+      "reviewStatus": "full_section_fetch_and_applicability_pending",
+      "executable": false
+    },
+    {
+      "id": "obs-hyundai-low-soc-message",
+      "sourceId": "hyundai-ce1-2024-ev-information",
+      "locator": "Checking warning messages: Low EV battery",
+      "kind": "published_numeric_behavior",
+      "summary": "The warning-message table places the low-EV-battery message below 20 percent SOC.",
+      "publishedActivation": { "operator": "lt", "value": 20, "unit": "%SOC" },
+      "publishedClearing": null,
+      "unresolved": "The same page's SOC-indicator text describes a light below 10 percent, while this table associates a light with the below-20-percent message. Do not infer one lamp activation predicate.",
+      "reviewStatus": "source_ambiguity",
+      "executable": false
+    },
+    {
+      "id": "obs-hyundai-urgent-soc-message",
+      "sourceId": "hyundai-ce1-2024-ev-information",
+      "locator": "Checking warning messages: Charge immediately. Power limited",
+      "kind": "published_numeric_behavior",
+      "summary": "The warning-message table places the immediate-charge/power-limited message below 10 percent SOC.",
+      "publishedActivation": { "operator": "lt", "value": 10, "unit": "%SOC" },
+      "publishedClearing": null,
+      "reviewStatus": "applicability_and_presentation_review_pending",
+      "executable": false
+    },
+    {
+      "id": "obs-tesla-lv-health-alert",
+      "sourceId": "tesla-model3-live-alerts-en-lt",
+      "locator": "VCFRONT_a182",
+      "kind": "published_qualitative_behavior",
+      "summary": "The alert describes degraded low-voltage battery performance and software-update inhibition; a voltage trigger is not stated.",
+      "publishedActivation": null,
+      "publishedClearing": null,
+      "numericThresholdStatus": "not_stated_in_reviewed_section",
+      "reviewStatus": "applicability_pending",
+      "executable": false
+    },
+    {
+      "id": "obs-tata-lv-charging-lamp",
+      "sourceId": "tata-nexon-ev-rev04-july2025",
+      "locator": "Printed page 124: LV Battery charging",
+      "kind": "published_qualitative_behavior",
+      "summary": "A persistent red low-voltage charging lamp while running indicates charging trouble; ignition-on illumination is a separate state.",
+      "publishedActivation": null,
+      "publishedClearing": null,
+      "numericThresholdStatus": "not_stated_in_reviewed_excerpt",
+      "reviewStatus": "full_document_and_variant_review_pending",
+      "executable": false
+    }
+  ]
+}
