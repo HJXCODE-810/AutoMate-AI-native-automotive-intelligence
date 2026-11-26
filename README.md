@@ -1,10 +1,10 @@
 # AutoMate OS
 
-**One Intelligent Platform. Every Vehicle.** AutoMate OS is an automotive simulation laboratory for learning about vehicle systems through fictional profiles and, in future milestones, deterministic scenarios.
+**One Intelligent Platform. Every Vehicle.** AutoMate OS is an automotive simulation laboratory for learning about vehicle systems through fictional profiles and deterministic scenarios.
 
 ## Current status
 
-The Day 2 local foundation is implemented: a React vehicle selector, read-only catalog API, strict data validation, and capability filtering for three fictional profiles and 30 signals. The simulation package currently provides only a pure clock boundary. Readings remain empty; scenario execution, instrument-cluster warning behavior, persistence, and AI investigations are not implemented yet.
+The Day 2 local foundation and first simulation slice are implemented: three fictional profiles, 30 signal definitions, seeded telemetry, scenario-driven EPS/ABS/voltage events, deterministic warning rules, and an instrument cluster. Reports and sessions use process-local memory and disappear when the API restarts. Durable history, broader diagnostics, and AI investigations remain future work.
 
 The project is educational and simulation-only. It does not connect to or control real vehicles. Manufacturer research is non-executable and separate from the fictional catalog.
 
@@ -48,7 +48,7 @@ apps/web/                React UI and Vite config
 apps/api/                Web-standard API and local Node adapter
 packages/domain/         Zod schemas and inferred domain/API types
 packages/catalog/        Fictional data, validation, and registry
-packages/simulation/     Pure simulation-clock boundary
+packages/simulation/     Seeded telemetry, scenario execution, warnings
 docs/                    Design, ADRs, research, and test plan
 evidence/                Actual implementation and validation record
 ```
@@ -57,10 +57,11 @@ evidence/                Actual implementation and validation record
 flowchart LR
   Seed[Versioned fictional catalog] --> Validation[Schema and reference validation]
   Validation --> Registry[Capability registry]
-  Registry --> API[Read-only API]
-  API --> UI[Vehicle selector and signal table]
+  Registry --> API[Catalog and session API]
+  Simulator[Seeded simulation and warning rules] --> API
+  Registry --> API
+  API --> UI[Vehicle selector, cluster, and signal table]
   Manuals[Manufacturer observations] --> Research[Non-executable research]
-  Clock[Pure clock boundary] -. Next milestone .-> Simulator[Seeded telemetry engine]
 ```
 
 ## Delivery boundary
@@ -69,13 +70,15 @@ The build creates `apps/web/dist/` and `apps/api/dist/index.js`. These are local
 
 When OpenAI investigation is added, its key belongs in server runtime secrets; local key files must stay untracked. All `validRange`, `nominalRange`, sampling periods, and warning thresholds in the starter catalog are fictional assumptions. Profile support does not imply real-car sensor availability or diagnostic access.
 
-Next task: specify and review the seeded sensor-engine and warning-transition tests, then implement deterministic scenario execution and instrument-cluster projection.
+Next task: review and add regression coverage for deterministic replays, fault-to-indicator transitions, API session boundaries, and report history. Then design a durable persistence adapter.
 
 ## Design
 
 - [Weekend 1 foundation design](docs/FOUNDATION_DESIGN.md)
 - [ADR-001: catalog-driven modular monolith](docs/decisions/ADR-001-foundation.md)
 - [ADR-002: local runtime and portable API](docs/decisions/ADR-002-local-foundation-runtime.md)
+- [ADR-003: deterministic simulation and in-memory reports](docs/decisions/ADR-003-simulation-slice.md)
+- [Low-level design and architecture diagrams](docs/LOW_LEVEL_DESIGN.md)
 - [Synthetic catalog seed](packages/catalog/data/catalog-seed.json)
 - [Manufacturer manual research and coverage gaps](docs/research/MANUFACTURER_MANUAL_REVIEW.md)
 - [Structured manual observations](packages/catalog/data/manual-observations.json)

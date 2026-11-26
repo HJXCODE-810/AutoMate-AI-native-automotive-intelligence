@@ -37,3 +37,18 @@ Final source review found missing profile applicability on event-based scenarios
 - Build outputs are local. No Site, database, runtime secret, paid service, or production deployment was created.
 - No implementation commit or PR was created in this session; source changes are available for review in the working tree.
 - Model and reasoning effort selections were not independently recorded; no model comparison, token usage, or cost measurements are claimed.
+
+## First simulation slice
+
+Date: 2026-11-26 (Asia/Kolkata).
+
+Implemented after the Day 2 foundation: seeded synthetic readings, scenario execution, EPS/ABS/low-voltage warnings with deterministic rule references, explicit session advancement, and in-memory report saving. The web app exposes vehicle/scenario selection, a replay seed, the instrument cluster, indicators, signal readings, and report action. ADR-003 records the process-local storage decision and its restart limitation.
+
+| Check | Observed result |
+|---|---|
+| `npm.cmd run typecheck` | Passed after the simulation/API/UI changes |
+| `npm.cmd run build` | Passed; Vite web build and portable API bundle completed |
+| Direct API smoke flow | Created compact EPS session (201), advanced to tick 10 (200), observed active EPS warning and `eps_assist_fault`, saved report (201, `savedReport: true`) |
+| Vitest suite | Review Agent approved SIM-01..SIM-07 and API-SIM-01..API-SIM-03. Final `npm.cmd test` passed: 69 tests across 3 files (594ms). First run exposed a case-sensitive error-message regex; it was fixed, re-reviewed, then the suite passed. |
+| Typecheck | `npm.cmd run typecheck` passed after adding the simulation/API cases. |
+| Persistence | Process-local only; sessions and reports are lost when the API restarts. No database or hosted persistence was configured. |

@@ -135,7 +135,7 @@ export function createRegistry(input: unknown) {
         capabilities: catalog.signals.map((signal) => resolve(vehicle, signal)),
         scenarios: catalog.scenarios.filter((scenario) => scenario.profiles.includes(vehicleId))
           .map(({ id, durationTicks, tickDurationMs }) => ({ id, durationTicks, tickDurationMs })),
-        simulationStatus: "not_implemented" as const,
+        simulationStatus: "ready" as const,
       };
     },
   };

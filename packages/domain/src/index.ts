@@ -108,12 +108,12 @@ export const vehicleDetailResponseSchema = z.object({
   subsystems: z.array(z.object({ id: z.string(), name: z.string() }).strict()),
   capabilities: z.array(capabilitySchema),
   scenarios: z.array(z.object({ id: z.string(), durationTicks: z.number().int().positive(), tickDurationMs: z.number().int().positive() }).strict()),
-  simulationStatus: z.literal("not_implemented"),
+  simulationStatus: z.literal("ready"),
 }).strict();
 export type VehicleDetail = z.infer<typeof vehicleDetailResponseSchema>;
 export const healthResponseSchema = z.object({
   status: z.literal("ok"),
   service: z.literal("automate-api"),
   catalogVersion: z.string(),
-  simulation: z.literal("not_implemented"),
+  simulation: z.literal("ready"),
 }).strict();

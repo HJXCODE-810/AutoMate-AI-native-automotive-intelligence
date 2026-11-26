@@ -1,12 +1,12 @@
 # Foundation test cases and review gate
 
-Date: 2026-11-25. Status: approved for execution by Review Agent; results recorded separately below.
+Date: 2026-11-25. Status: Day 2 foundation suite approved and executed; simulation cases are pending review and have not been executed.
 
 ## Required workflow
 
 Author test cases -> Review Agent checks test design -> resolve findings -> review any materially changed cases -> execute approved cases -> record actual results. A source review or a passing typecheck does not establish passing behavioral tests.
 
-Scope is the Day 2 local foundation: typed catalog, API, vehicle selector, and a pure clock boundary. Full telemetry simulation, warnings, persistence, authentication, live AI, and deployment are not implemented by this slice.
+The approved cases below cover the Day 2 local foundation. The next-phase cases required for seeded telemetry, scenario execution, warnings, session APIs, and reports must be authored and reviewed before execution. Durable persistence, authentication, live AI, and deployment remain out of scope.
 
 ## Automated cases
 
@@ -29,6 +29,16 @@ Scope is the Day 2 local foundation: typed catalog, API, vehicle selector, and a
 | API-03 | Provenance boundary | Responses identify fictional/synthetic data, contain no readings, and exclude manual research | Same |
 | CLK-01 | Deterministic clock | Same duration and advances produce same time; input clock unchanged | `packages/simulation/src/index.test.ts` |
 | CLK-02 | Invalid clock | Negative/fractional/nonfinite values and unsafe integer overflow reject | Same |
+| SIM-01 | Replay determinism | Matching profile/scenario/seed/tick produce identical signal values, events, and indicator states | `packages/simulation/src/index.test.ts` |
+| SIM-02 | Capability gating and ranges | Only profile-supported values are emitted; generated values match their declared types and valid ranges | Same |
+| SIM-03 | EPS fault transition | EPS remains clear before its scenario event, then activates with the configured rule ID and explanation | Same |
+| SIM-04 | Voltage and communication faults | EV low-voltage ramp activates the voltage indicator; communication event activates its indicator | Same |
+| SIM-05 | Scenario and seed validation | Unsupported profile/scenario pairs, unknown profiles, and invalid seeds reject | Same |
+| SIM-06 | Advance bounds | Zero, fractional, excessive, and beyond-duration advances reject | Same |
+| SIM-07 | Warning hysteresis | Low-voltage warning activates below threshold and clears only after the configured clear threshold | Same |
+| API-SIM-01 | Session lifecycle | Session creation returns a synthetic capability-filtered snapshot; advance and GET return current tick | `apps/api/src/index.test.ts` |
+| API-SIM-02 | Saved report history | Saving returns an in-memory report and adds it to report history; session records saved status | Same |
+| API-SIM-03 | Session API errors | Invalid profile/scenario/seed, invalid or excessive advances, and missing sessions return errors | Same |
 
 ## Browser acceptance cases (manual, no Playwright dependency yet)
 
@@ -41,9 +51,14 @@ Scope is the Day 2 local foundation: typed catalog, API, vehicle selector, and a
 | WEB-05 | In a test-only reverse proxy, hold the petrol-detail response for 1500ms and release the EV response immediately. Select petrol, then EV before releasing petrol. Observe after both requests finish or the earlier request is aborted. | Heading and rows remain EV; stale petrol data never replaces them. If controlled delay tooling is unavailable, record this case as unexercised, not passed. Ordinary rapid clicks alone do not establish race coverage. |
 | WEB-06 | Open with API stopped, then retry after API starts | Actionable error appears; retry restores data without page reload |
 | WEB-07 | Inspect at 390px and desktop widths | Controls remain usable; horizontal table scroll stays within its container |
-| WEB-08 | Inspect detail/scenario presentation | Units and fictional range notice are visible; scenarios are shown as definitions, without fake run controls |
+| WEB-08 | Inspect detail/scenario presentation | Units and fictional range notice are visible; applicable scenarios are selectable in the simulation panel |
+| WEB-09 | Start normal sessions for petrol, EV, and diesel using a fixed seed | Supported telemetry appears; unsupported powertrain signals remain absent; same replay inputs reproduce the same values |
+| WEB-10 | Run EPS and low-voltage scenarios, advancing to their fault ticks | The matching simulated indicators and deterministic explanations activate; unrelated indicators remain clear |
+| WEB-11 | Save a report and inspect confirmation | UI confirms save and identifies the process-local restart limitation |
 
 ## Review record
+
+Simulation cases SIM-01 through SIM-07 and API-SIM-01 through API-SIM-03 were authored on 2026-11-26 and approved by a static Review Agent on 2026-11-26. Review findings added fractional-advance cases and warning hysteresis coverage. The first test run found a case-sensitive message regex mismatch; the corrected assertion was reviewed and approved before the final run. WEB-09 through WEB-11 are proposed manual acceptance cases and remain pending review.
 
 First static review completed by Review Agent on 2026-11-25; no cases executed. Findings: scenario negative assertions needed specific errors and a valid baseline; lower-threshold clearing rules needed coverage; summary counts needed comparison with all three profile detail responses; stale-response browser coverage needed controlled response ordering. A second static review caught a fixture dependency error: replacing all warning rules removed definitions needed by retained event scenarios. That fixture was corrected without executing tests.
 
@@ -68,3 +83,9 @@ Additional source review found that event existence was validated globally witho
 - WEB-08: observed units, synthetic range notice, and applicable scenario names in the expanded notes; no scenario-run controls were presented.
 
 Browser checks were performed through the in-app browser against local development services. Screenshots were inspected during the checks. No automated browser suite, GitHub CI run, OEM conformance check, or deployed Site was exercised.
+
+Simulation/API test execution on 2026-11-26:
+
+- `npm.cmd test`: final run passed, 69 tests across three files (594ms reported by Vitest). This includes the approved SIM-01 through SIM-07 and API-SIM-01 through API-SIM-03 cases.
+- First run: 68 passed and one failed because the SIM-05 regex was case-sensitive against a capitalized `Seed` error. The expectation was corrected to `/seed/i`, reviewed and approved, then the complete suite passed.
+- `npm.cmd run typecheck`: passed after adding the simulation/API cases.
