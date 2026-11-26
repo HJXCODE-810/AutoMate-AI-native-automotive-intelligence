@@ -2,29 +2,26 @@
 
 ## Project Structure & Module Organization
 
-AutoMate OS is at the design stage; no runnable application, test suite, or asset directory exists yet.
+AutoMate OS has a runnable local catalog foundation. Seeded telemetry, persistence, and AI are future milestones.
 
-- `docs/FOUNDATION_DESIGN.md`: architecture, API boundaries, and implementation sequence.
-- `docs/decisions/`: architecture decision records, such as `ADR-001-foundation.md`.
-- `docs/research/`: manufacturer references, findings, and unresolved coverage gaps.
-- `packages/catalog/data/catalog-seed.json`: fictional profiles, signals, warning rules, and scenarios.
-- `packages/catalog/data/manual-observations.json`: sourced research observations; these are non-executable.
+- `docs/`: foundation design, ADRs, manufacturer research, and reviewed test cases.
+- `packages/catalog/data/catalog-seed.json`: fictional profiles, signals, rules, and scenarios.
+- `packages/catalog/data/manual-observations.json`: non-executable manufacturer observations.
 
-The planned TypeScript structure uses `apps/web`, `apps/api`, and packages for domain, catalog, simulation, cluster projection, and persistence. Keep simulation independent of UI, database, HTTP, and OpenAI SDK code.
+Source lives in `apps/web/src`, `apps/api/src`, and `packages/{domain,catalog,simulation}/src`. Tests are colocated; illustrations are inline SVG. Keep simulation independent of UI, database, HTTP, and OpenAI SDK code. Cluster projection and persistence remain planned.
 
 ## Build, Test, and Development Commands
 
-There is no `package.json`, lockfile, or configured build pipeline. Do not report `npm test` or `npm run build` as available or passing.
+Use Node.js 22.12+ and npm workspaces. Run from the root:
 
-Current checks include:
+- `npm ci`: install locked dependencies.
+- `npm run dev`: start web (5173) and API (3001).
+- `npm run typecheck`: check strict TypeScript.
+- `npm test`: execute reviewed Vitest cases.
+- `npm run build`: typecheck and build both applications.
+- `git diff --check`: check changed whitespace.
 
-```powershell
-git diff --check
-Get-Content -Raw packages/catalog/data/catalog-seed.json | ConvertFrom-Json | Out-Null
-Get-Content -Raw packages/catalog/data/manual-observations.json | ConvertFrom-Json | Out-Null
-```
-
-These check diff whitespace and JSON syntax. When scaffolding the application, document actual development, typecheck, test, and build scripts in `README.md`.
+Use `npm.cmd` on PowerShell if `npm.ps1` is blocked. API edits require restarting the development launcher; web edits reload automatically.
 
 ## Coding Style & Naming Conventions
 
@@ -34,11 +31,13 @@ Use stable dotted signal IDs (`engine.rpm`), descriptive profile IDs (`compact-p
 
 ## Testing Guidelines
 
-Vitest and Playwright are proposed tools, not installed dependencies. Use `*.test.ts` for unit tests and `*.spec.ts` for browser tests when introduced. Prioritize deterministic replay, unsupported-signal gating, valid references, warning transitions, and resource authorization. No coverage percentage is established. Report actual checks and limitations.
+Write test cases before execution. Have a Review Agent review coverage, assertions, and expected outcomes; resolve findings before running tests. New or materially changed cases require the same gate. Record approval and execution results separately.
+
+Vitest is installed; Playwright is not. Use `*.test.ts` for unit/contract tests and `*.spec.ts` for future browser tests. Follow `docs/testing/FOUNDATION_TEST_PLAN.md`. Prioritize replay, capability gating, references, warning transitions, and authorization as implemented. No coverage percentage is established. Record results in `evidence/README.md`.
 
 ## Commit & Pull Request Guidelines
 
-The existing history uses an imperative subject: `Add project description to README.md`. Follow that concise style and keep commits focused. Use `codex/` for agent-created branches. PRs should explain purpose, changed behavior or design, verification, limitations, and related issues when applicable. Include flowcharts for architecture changes and screenshots for implemented UI changes.
+Use imperative commit subjects, following `Add project description to README.md` in existing history. Keep commits focused. Use `codex/` for agent-created branches. PRs should explain purpose, changed behavior or design, verification, limitations, and related issues when applicable. Include flowcharts for architecture changes and screenshots for implemented UI changes.
 
 ## Security & Data Integrity
 

@@ -128,16 +128,19 @@ All names and specifications below are invented. They are capability examples, n
 |---|---|---|---|
 | Speed / trip / odometer | Supported | Supported | Supported |
 | RPM / engine load / coolant | Supported | Unsupported | Supported |
-| Oil pressure / level / service reminder | Supported | Unsupported | Supported (service reminder supported) |
+| Oil pressure / oil level | Both supported | Unsupported | Pressure supported; level unavailable |
+| Service reminder | Supported | Supported | Supported |
 | Fuel level / fuel rate | Supported | Unsupported | Supported |
 | 12 V voltage / module events | Supported | Supported | Supported |
-| ABS / ESC / brake status | Supported, simulated | Supported, simulated | Supported, simulated |
+| ABS / ESC status | Supported, simulated | Supported, simulated | Supported, simulated |
 | EPS / steering angle | EPS supported; angle unavailable | EPS unsupported in seed | EPS and angle supported, simulated |
 | Battery SOC / pack temperature / motor temperature / regen | Unsupported | Supported | Unsupported |
-| Tire pressure / door / seatbelt | Conditional | Supported | Supported |
-| ADAS / suspension / virtual software state | Unsupported | Unsupported | Supported, simulated |
+| Front-left tire pressure | Unsupported | Supported | Supported |
+| Door / driver seatbelt | Supported | Supported | Supported |
+| Blind-spot / ride-height status | Unsupported | Unsupported | Supported, simulated |
+| Virtual software state | Not defined in seed | Not defined in seed | Not defined in seed |
 
-`conditional` must resolve to supported only when the profile's explicit configuration enables it. Do not use a global “car has sensor” assumption. The seed includes no inferred availability: assignments are explicit, and intentionally unassigned combinations remain unknown until resolved.
+The current registry implements supported, unsupported, and unknown assignments. Conditional capability configuration is a future extension, not present in this seed. Do not use a global “car has sensor” assumption. Missing assignments remain unknown until resolved.
 
 ## 6. Capability registry contract
 
