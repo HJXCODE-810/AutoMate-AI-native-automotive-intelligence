@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@automate/domain": "0.1.0",
-    "@automate/catalog": "0.1.0"
+    "@automate/catalog": "0.1.0",
+    "@automate/simulation": "0.1.0"
   }
 }

@@ -38,14 +38,22 @@ async function fetchJson(path: string, signal: AbortSignal): Promise<unknown> {
   return response.json();
 }
 
-function SignalRow({ capability }: { capability: CapabilityResult }) {
+type SimulationState = { id: string; vehicleProfileId: string; scenarioId: string; seed: number; tick: number; tickDurationMs: number; values: Record<string, number | string | boolean>; events: string[]; indicators: { id: string; severity: string; status: string; ruleId: string; explanation: string }[]; savedReport: boolean; notice: string };
+async function postJson(path: string, body: unknown): Promise<unknown> {
+  const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const result = await response.json();
+  if (!response.ok) throw new Error((result as { error?: { message?: string } }).error?.message ?? `Request failed (${response.status}).`);
+  return result;
+}
+
+function SignalRow({ capability, value, sessionActive }: { capability: CapabilityResult; value: number | string | boolean | undefined; sessionActive: boolean }) {
   const signal = capability.definition;
   return <tr>
     <td><strong>{names[signal.id] ?? signal.id}</strong><code>{signal.id}</code></td>
     <td className="signal-type">{signal.valueType === "number" ? "Measurement" : signal.valueType === "enum" ? "System status" : "State"}</td>
     <td>{signal.unit === "degC" ? "°C" : signal.unit || "—"}</td>
     <td><span className={`status-tag ${capability.availability}`} title={capability.reason}>{capability.availability === "supported" ? "Configured" : capability.availability === "unsupported" ? "Unavailable" : "Unknown"}</span></td>
-    <td><span className="no-reading">—</span><small>{capability.readingStatus === "not_started" ? "No session yet" : "Unavailable"}</small></td>
+    <td>{capability.availability === "supported" && sessionActive && value !== undefined ? <><span className="reading-value">{String(value)}</span><small>Simulated</small></> : <><span className="no-reading">—</span><small>{capability.availability === "supported" ? "No session yet" : "Unavailable"}</small></>}</td>
   </tr>;
 }
 
@@ -62,6 +70,11 @@ function App() {
   const [query, setQuery] = useState("");
   const [availability, setAvailability] = useState("all");
   const [subsystem, setSubsystem] = useState("all");
+  const [scenarioId, setScenarioId] = useState("");
+  const [seed, setSeed] = useState("42");
+  const [simulation, setSimulation] = useState<SimulationState | null>(null);
+  const [simulationError, setSimulationError] = useState("");
+  const [simulationBusy, setSimulationBusy] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -97,6 +110,9 @@ function App() {
 
   const selected = vehicles.find((vehicle) => vehicle.id === selectedId);
   const currentDetail = detail?.vehicle.id === selectedId ? detail : null;
+  useEffect(() => {
+    if (currentDetail && !currentDetail.scenarios.some((scenario) => scenario.id === scenarioId)) setScenarioId(currentDetail.scenarios[0]?.id ?? "");
+  }, [currentDetail, scenarioId]);
   const filtered = useMemo(() => currentDetail?.capabilities.filter((entry) => {
     const search = `${entry.signalId} ${names[entry.signalId] ?? ""}`.toLowerCase();
     return search.includes(query.trim().toLowerCase())
@@ -104,7 +120,27 @@ function App() {
       && (subsystem === "all" || entry.definition.subsystemId === subsystem);
   }) ?? [], [currentDetail, query, availability, subsystem]);
 
-  function selectVehicle(id: string) { setSelectedId(id); setQuery(""); setAvailability("all"); setSubsystem("all"); }
+  function selectVehicle(id: string) { setSelectedId(id); setQuery(""); setAvailability("all"); setSubsystem("all"); setSimulation(null); setSimulationError(""); }
+  async function startSimulation() {
+    setSimulationBusy(true); setSimulationError("");
+    try { setSimulation(await postJson("/api/sessions", { vehicleProfileId: selectedId, scenarioId, seed: Number(seed) }) as SimulationState); }
+    catch (failure) { setSimulationError(failure instanceof Error ? failure.message : "Unable to start simulation."); }
+    finally { setSimulationBusy(false); }
+  }
+  async function advanceSession(ticks: number) {
+    if (!simulation) return;
+    setSimulationBusy(true); setSimulationError("");
+    try { setSimulation(await postJson(`/api/sessions/${encodeURIComponent(simulation.id)}/advance`, { ticks }) as SimulationState); }
+    catch (failure) { setSimulationError(failure instanceof Error ? failure.message : "Unable to advance simulation."); }
+    finally { setSimulationBusy(false); }
+  }
+  async function saveReport() {
+    if (!simulation) return;
+    setSimulationBusy(true); setSimulationError("");
+    try { setSimulation(await postJson(`/api/sessions/${encodeURIComponent(simulation.id)}/report`, {}) as SimulationState); }
+    catch (failure) { setSimulationError(failure instanceof Error ? failure.message : "Unable to save report."); }
+    finally { setSimulationBusy(false); }
+  }
 
   return <div className="app-shell">
     <header className="topbar">
@@ -140,6 +176,22 @@ function App() {
         <div className="next-stage"><span className="stage-label">NEXT MILESTONE</span><h3>Bring the signals to life.</h3><p>The sensor engine comes next. Readings stay empty until simulation is implemented.</p></div>
       </section>}
 
+      {selected && !error && <section className="simulator" aria-labelledby="simulator-heading">
+        <div className="section-heading"><div><p className="eyebrow">NEXT MILESTONE · DETERMINISTIC SESSION</p><h2 id="simulator-heading">Run a virtual drive</h2></div><p>Seeded telemetry · rule based warnings</p></div>
+        <div className="simulator-controls">
+          <div><label htmlFor="scenario-choice">Scenario</label><select id="scenario-choice" value={scenarioId} onChange={(event) => { setScenarioId(event.target.value); setSimulation(null); }} disabled={simulationBusy || !currentDetail}>{currentDetail?.scenarios.map((scenario) => <option key={scenario.id} value={scenario.id}>{scenario.id.replace(/-v1$/, "").replaceAll("-", " ")}</option>)}</select></div>
+          <div><label htmlFor="simulation-seed">Replay seed</label><input id="simulation-seed" type="number" min="0" max="2147483647" value={seed} onChange={(event) => setSeed(event.target.value)} disabled={simulationBusy || Boolean(simulation)} /></div>
+          {!simulation && <button type="button" onClick={startSimulation} disabled={simulationBusy || !scenarioId}>{simulationBusy ? "Starting…" : "Start simulation"}</button>}
+          {simulation && <div className="session-actions"><button type="button" onClick={() => advanceSession(1)} disabled={simulationBusy}>Advance 1 tick</button><button type="button" onClick={() => advanceSession(5)} disabled={simulationBusy}>Advance 5</button><button type="button" onClick={saveReport} disabled={simulationBusy || simulation.savedReport}>{simulation.savedReport ? "Report saved" : "Save report"}</button><button className="quiet-button" type="button" onClick={() => { setSimulation(null); setSimulationError(""); }}>New session</button></div>}
+        </div>
+        {simulationError && <p className="sim-error" role="alert">{simulationError}</p>}
+        {simulation && <div className="cluster" aria-live="polite">
+          <div className="cluster-head"><div><span className="banner-label">SIMULATED SESSION</span><strong>{selected.displayName}</strong></div><span>Tick {simulation.tick} · Seed {simulation.seed}</span></div>
+          <div className="cluster-readings">{["vehicle.speed", "engine.rpm", "ev.battery_state_of_charge", "electrical.system_voltage", "engine.coolant_temperature"].filter((id) => id in simulation.values).map((id) => <div className="reading-card" key={id}><span>{names[id]}</span><strong>{simulation.values[id]}<small>{currentDetail?.capabilities.find((entry) => entry.signalId === id)?.definition.unit === "degC" ? "°C" : currentDetail?.capabilities.find((entry) => entry.signalId === id)?.definition.unit}</small></strong></div>)}</div>
+          <div className="cluster-lower"><div><h3>Instrument indicators</h3><div className="indicator-list">{simulation.indicators.map((indicator) => <div className={`indicator ${indicator.status}`} key={indicator.ruleId}><span>{indicator.id.replaceAll(".", " ")}</span><strong>{indicator.status === "active" ? "SIMULATED WARNING" : "CLEAR"}</strong><small>{indicator.explanation}</small></div>)}</div></div><div><h3>Event timeline</h3>{simulation.events.length ? simulation.events.map((event) => <p className="event-row" key={event}>{event.replaceAll("_", " ")} · Emitted in this scenario</p>) : <p className="muted-copy">No fault events emitted yet.</p>}<p className="sim-notice">{simulation.notice} Reports are held in memory and disappear when the API restarts.</p></div></div>
+        </div>}
+      </section>}
+
       <section id="capabilities" className="capability-section" aria-labelledby="signals-heading">
         <div className="section-heading"><div><p className="eyebrow">UNDER THE HOOD</p><h2 id="signals-heading">Signal registry</h2></div><p>Capability definitions, with their limits in view.</p></div>
         {detailLoading && <p className="loading" role="status">Loading profile capabilities…</p>}
@@ -151,9 +203,9 @@ function App() {
             <div className="availability-filter" role="group" aria-label="Signal availability">{[["all", "All signals"], ["supported", "Configured"], ["unavailable", "Unavailable"]].map(([value, label]) => <button type="button" key={value} aria-pressed={availability === value} onClick={() => setAvailability(value!)}>{label}</button>)}</div>
           </div>
           <p className="results-count" role="status">{filtered.length} of {currentDetail.capabilities.length} signals · {selected?.displayName}</p>
-          <div className="table-scroll" tabIndex={0} role="region" aria-label="Vehicle capability table"><table><thead><tr><th scope="col">Signal</th><th scope="col">Type</th><th scope="col">Unit</th><th scope="col">Capability</th><th scope="col">Reading</th></tr></thead><tbody>{filtered.map((capability) => <SignalRow key={capability.signalId} capability={capability} />)}</tbody></table></div>
+          <div className="table-scroll" tabIndex={0} role="region" aria-label="Vehicle capability table"><table><thead><tr><th scope="col">Signal</th><th scope="col">Type</th><th scope="col">Unit</th><th scope="col">Capability</th><th scope="col">Reading</th></tr></thead><tbody>{filtered.map((capability) => <SignalRow key={capability.signalId} capability={capability} value={simulation?.values[capability.signalId]} sessionActive={Boolean(simulation)} />)}</tbody></table></div>
           {filtered.length === 0 && <div className="empty-state"><h3>No signals match these filters.</h3><p>Try a different signal name or system.</p><button type="button" onClick={() => { setQuery(""); setSubsystem("all"); setAvailability("all"); }}>Clear filters</button></div>}
-          <details className="catalog-notes"><summary>About these definitions and scenarios</summary><p>{currentDetail.rangeNotice}</p><p>“Configured” means the profile includes the signal. It does not mean a sensor was measured, or that a production vehicle exposes it.</p><p>Available scenario definitions: {currentDetail.scenarios.map((scenario) => scenario.id.replace(/-v1$/, "").replaceAll("-", " ")).join(", ")}. Execution is a future milestone.</p></details>
+          <details className="catalog-notes"><summary>About these definitions and scenarios</summary><p>{currentDetail.rangeNotice}</p><p>“Configured” means the profile includes the signal. It does not mean a sensor was measured, or that a production vehicle exposes it.</p><p>Available scenario definitions: {currentDetail.scenarios.map((scenario) => scenario.id.replace(/-v1$/, "").replaceAll("-", " ")).join(", ")}. Session outputs and reports are synthetic and held in memory only.</p></details>
         </>}
         {!selected && !loading && !error && <p>No fictional vehicle profiles are available.</p>}
       </section>

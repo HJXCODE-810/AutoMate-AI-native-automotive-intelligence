@@ -16,9 +16,7 @@ Implement the read-only API as a Web-standard `Request -> Promise<Response>` han
 
 The Vite dev and preview servers proxy `/api` to the local API. Both startup processes run from one Node launcher so Windows does not need to change PowerShell execution policy. Use `npm.cmd` if `npm.ps1` is blocked.
 
-Load the checked-in synthetic catalog after schema and reference validation. Manufacturer observations remain a separate non-executable research document. Expose metadata and capabilities only; every reading is null and the API explicitly reports simulation as not implemented.
-
-The simulation package contains only a pure clock boundary. Seeded readings, warning evaluation, sessions, and persistence are later tasks. Catalog scenario definitions are not executable scenarios yet.
+Load the checked-in synthetic catalog after schema and reference validation. Manufacturer observations remain a separate non-executable research document. The initial read-only API exposed metadata and capabilities only. The simulation API and storage choice were added later in ADR-003.
 
 ## Consequences
 

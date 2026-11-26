@@ -5,7 +5,23 @@ const port = Number(process.env.PORT ?? 3001);
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("PORT must be between 1 and 65535");
 const server = createServer(async (incoming, outgoing) => {
   try {
-    const request = new Request(new URL(incoming.url ?? "/", `http://127.0.0.1:${port}`), { method: incoming.method ?? "GET" });
+    const method = incoming.method ?? "GET";
+    const chunks: Buffer[] = [];
+    if (method !== "GET" && method !== "HEAD") {
+      for await (const chunk of incoming) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    const body = chunks.length ? Buffer.concat(chunks).toString("utf8") : undefined;
+    const headers = new Headers();
+    for (const name of ["content-type", "accept"]) {
+      const value = incoming.headers[name];
+      if (typeof value === "string") headers.set(name, value);
+      else if (Array.isArray(value)) headers.set(name, value.join(", "));
+    }
+    const request = new Request(new URL(incoming.url ?? "/", `http://127.0.0.1:${port}`), {
+      method,
+      headers,
+      ...(body === undefined ? {} : { body }),
+    });
     const response = await handleRequest(request);
     outgoing.writeHead(response.status, Object.fromEntries(response.headers));
     outgoing.end(await response.text());

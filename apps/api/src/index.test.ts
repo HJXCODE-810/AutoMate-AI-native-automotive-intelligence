@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { healthResponseSchema, vehicleDetailResponseSchema, vehicleListResponseSchema } from "@automate/domain";
-import { handleRequest } from "./index.ts";
+import { createApi, handleRequest } from "./index.ts";
 
 const request = (path: string, method = "GET") => handleRequest(new Request(`http://localhost${path}`, { method }));
 
@@ -8,7 +8,7 @@ describe("API: local foundation contracts", () => {
   it.each(["/health", "/api/health"])("API-01 serves health at %s", async (path) => {
     const response = await request(path);
     expect(response.status).toBe(200);
-    expect(healthResponseSchema.parse(await response.json())).toMatchObject({ status: "ok", simulation: "not_implemented" });
+    expect(healthResponseSchema.parse(await response.json())).toMatchObject({ status: "ok", simulation: "ready" });
     expect(response.headers.get("content-type")).toContain("application/json");
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
@@ -50,7 +50,7 @@ describe("API: local foundation contracts", () => {
     expect(body.vehicle.id).toBe("electric-suv-v1");
     expect(body.source).toBe("synthetic");
     expect(body.knowledgeBasis).toBe("fictional_demo");
-    expect(body.simulationStatus).toBe("not_implemented");
+    expect(body.simulationStatus).toBe("ready");
     expect(body.capabilities.find((entry) => entry.signalId === "engine.rpm")).toMatchObject({ availability: "unsupported", readingStatus: "unavailable", value: null });
     expect(body.capabilities.every((entry) => entry.value === null)).toBe(true);
     expect(raw).not.toHaveProperty("observations");
@@ -72,5 +72,73 @@ describe("API: local foundation contracts", () => {
     expect(response.status).toBe(405);
     expect(response.headers.get("allow")).toBe("GET");
     expect(await response.json()).toMatchObject({ error: { code: "METHOD_NOT_ALLOWED" } });
+  });
+});
+
+describe("API: simulation sessions and reports", () => {
+  function sessionRequest(api: typeof handleRequest, path: string, method = "GET", body?: unknown) {
+    const init: RequestInit = { method };
+    if (body !== undefined) {
+      init.headers = { "Content-Type": "application/json" };
+      init.body = JSON.stringify(body);
+    }
+    return api(new Request(`http://localhost/api${path}`, init));
+  }
+
+  it("API-SIM-01 creates, advances, and reopens a capability-filtered synthetic session", async () => {
+    const api = createApi();
+    const created = await sessionRequest(api, "/sessions", "POST", {
+      vehicleProfileId: "electric-suv-v1", scenarioId: "normal-idle-v1", seed: 91,
+    });
+    expect(created.status).toBe(201);
+    const initial = await created.json();
+    expect(initial).toMatchObject({ vehicleProfileId: "electric-suv-v1", scenarioId: "normal-idle-v1", seed: 91, tick: 0, source: "synthetic" });
+    expect(initial.values).toHaveProperty("ev.battery_state_of_charge");
+    expect(initial.values).not.toHaveProperty("engine.rpm");
+
+    const advanced = await sessionRequest(api, `/sessions/${initial.id}/advance`, "POST", { ticks: 5 });
+    expect(advanced.status).toBe(200);
+    const advancedState = await advanced.json();
+    expect(advancedState).toMatchObject({ id: initial.id, tick: 5 });
+    expect(Object.keys(advancedState.values).sort()).toEqual(Object.keys(initial.values).sort());
+    const reopened = await sessionRequest(api, `/sessions/${initial.id}`);
+    expect(reopened.status).toBe(200);
+    expect(await reopened.json()).toMatchObject({ id: initial.id, tick: 5 });
+  });
+
+  it("API-SIM-02 saves an in-memory report that appears in report history", async () => {
+    const api = createApi();
+    const created = await sessionRequest(api, "/sessions", "POST", {
+      vehicleProfileId: "compact-petrol-v1", scenarioId: "eps-assist-fault-v1", seed: 42,
+    });
+    const session = await created.json();
+    await sessionRequest(api, `/sessions/${session.id}/advance`, "POST", { ticks: 8 });
+    const saved = await sessionRequest(api, `/sessions/${session.id}/report`, "POST", {});
+    expect(saved.status).toBe(201);
+    const report = await saved.json();
+    expect(report).toMatchObject({ reportId: "report-1", id: session.id, tick: 8, savedReport: true, durability: "in_memory" });
+    const history = await sessionRequest(api, "/reports");
+    expect(await history.json()).toMatchObject({ source: "synthetic", durability: "in_memory", reports: [{ reportId: "report-1", id: session.id, tick: 8 }] });
+    expect(await (await sessionRequest(api, `/sessions/${session.id}`)).json()).toMatchObject({ savedReport: true });
+  });
+
+  it("API-SIM-03 rejects invalid session inputs, advances, and missing sessions", async () => {
+    const api = createApi();
+    for (const body of [
+      { vehicleProfileId: "missing-profile", scenarioId: "normal-idle-v1", seed: 1 },
+      { vehicleProfileId: "electric-suv-v1", scenarioId: "eps-assist-fault-v1", seed: 1 },
+      { vehicleProfileId: "compact-petrol-v1", scenarioId: "normal-idle-v1", seed: -1 },
+      { vehicleProfileId: "compact-petrol-v1", scenarioId: "normal-idle-v1", seed: 1.5 },
+    ]) {
+      expect((await sessionRequest(api, "/sessions", "POST", body)).status).toBe(400);
+    }
+    expect((await sessionRequest(api, "/sessions/not-here")).status).toBe(404);
+    const created = await sessionRequest(api, "/sessions", "POST", {
+      vehicleProfileId: "compact-petrol-v1", scenarioId: "normal-idle-v1", seed: 1,
+    });
+    const session = await created.json();
+    for (const ticks of [0, 1.5, 1001, 121]) {
+      expect((await sessionRequest(api, `/sessions/${session.id}/advance`, "POST", { ticks })).status).toBe(400);
+    }
   });
 });

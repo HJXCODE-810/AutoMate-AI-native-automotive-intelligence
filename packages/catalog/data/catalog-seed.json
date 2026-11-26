@@ -90,7 +90,8 @@
     { "id": "warn-low-12v-v1", "signalId": "electrical.system_voltage", "operator": "lte", "threshold": 11.5, "severity": "warning", "indicatorId": "electrical.low_voltage", "clearAbove": 12.1, "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"] },
     { "id": "warn-ev-pack-temperature-v1", "signalId": "ev.pack_temperature", "operator": "gte", "threshold": 55, "severity": "warning", "indicatorId": "ev.battery_temperature", "clearBelow": 48, "profiles": ["electric-suv-v1"] },
     { "id": "warn-abs-wheel-sensor-event-v1", "eventType": "abs_wheel_sensor_fault", "condition": "event_present", "severity": "warning", "indicatorId": "brakes.abs", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"] },
-    { "id": "warn-module-communication-event-v1", "eventType": "module_communication_intermittent", "condition": "event_present", "severity": "warning", "indicatorId": "electrical.module_communication", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"] }
+    { "id": "warn-module-communication-event-v1", "eventType": "module_communication_intermittent", "condition": "event_present", "severity": "warning", "indicatorId": "electrical.module_communication", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"] },
+    { "id": "warn-eps-assist-event-v1", "eventType": "eps_assist_fault", "condition": "event_present", "severity": "warning", "indicatorId": "steering.eps", "profiles": ["compact-petrol-v1", "luxury-diesel-v1"] }
   ],
   "scenarios": [
     { "id": "normal-idle-v1", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"], "durationTicks": 120, "tickDurationMs": 1000, "actions": [] },
@@ -98,6 +99,7 @@
     { "id": "low-oil-pressure-v1", "profiles": ["compact-petrol-v1", "luxury-diesel-v1"], "durationTicks": 40, "tickDurationMs": 1000, "actions": [{ "atTick": 8, "type": "set_signal", "signalId": "engine.oil_pressure", "value": 55 }] },
     { "id": "low-12v-voltage-v1", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"], "durationTicks": 40, "tickDurationMs": 1000, "actions": [{ "atTick": 8, "type": "ramp_signal", "signalId": "electrical.system_voltage", "from": 13.8, "to": 10.9, "overTicks": 10 }, { "atTick": 20, "type": "emit_event", "eventType": "module_communication_intermittent" }] },
     { "id": "ev-battery-temperature-v1", "profiles": ["electric-suv-v1"], "durationTicks": 50, "tickDurationMs": 1000, "actions": [{ "atTick": 10, "type": "ramp_signal", "signalId": "ev.pack_temperature", "from": 32, "to": 65, "overTicks": 25 }] },
-    { "id": "abs-wheel-sensor-v1", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"], "durationTicks": 30, "tickDurationMs": 1000, "actions": [{ "atTick": 10, "type": "emit_event", "eventType": "abs_wheel_sensor_fault" }] }
+    { "id": "abs-wheel-sensor-v1", "profiles": ["compact-petrol-v1", "electric-suv-v1", "luxury-diesel-v1"], "durationTicks": 30, "tickDurationMs": 1000, "actions": [{ "atTick": 10, "type": "emit_event", "eventType": "abs_wheel_sensor_fault" }] },
+    { "id": "eps-assist-fault-v1", "profiles": ["compact-petrol-v1", "luxury-diesel-v1"], "durationTicks": 30, "tickDurationMs": 1000, "actions": [{ "atTick": 8, "type": "set_signal", "signalId": "steering.eps_status", "value": "warning" }, { "atTick": 8, "type": "emit_event", "eventType": "eps_assist_fault" }] }
   ]
 }
