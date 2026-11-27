@@ -117,4 +117,11 @@ describe("SIM: deterministic vehicle sessions", () => {
     expect(recovered.values["electrical.system_voltage"]).toBe(13);
     expect(recovered.indicators.find((entry) => entry.id === "electrical.low_voltage")?.status).toBe("clear");
   });
+
+  it("SIM-08 records the scheduled tick when one advance crosses an event action", () => {
+    const session = createSimulationSession(catalog, "compact-petrol-v1", "eps-assist-fault-v1", 8, "crossed-event");
+    const snapshot = advanceSimulation(session, 10);
+    expect(snapshot.events).toContain("eps_assist_fault");
+    expect(session.eventTicks.get("eps_assist_fault")).toBe(8);
+  });
 });

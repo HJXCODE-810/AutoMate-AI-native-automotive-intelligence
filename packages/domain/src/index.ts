@@ -116,4 +116,5 @@ export const healthResponseSchema = z.object({
   service: z.literal("automate-api"),
   catalogVersion: z.string(),
   simulation: z.literal("ready"),
+  durability: z.enum(["in_memory", "postgresql"]),
 }).strict();

@@ -51,4 +51,21 @@ Implemented after the Day 2 foundation: seeded synthetic readings, scenario exec
 | Direct API smoke flow | Created compact EPS session (201), advanced to tick 10 (200), observed active EPS warning and `eps_assist_fault`, saved report (201, `savedReport: true`) |
 | Vitest suite | Review Agent approved SIM-01..SIM-07 and API-SIM-01..API-SIM-03. Final `npm.cmd test` passed: 69 tests across 3 files (594ms). First run exposed a case-sensitive error-message regex; it was fixed, re-reviewed, then the suite passed. |
 | Typecheck | `npm.cmd run typecheck` passed after adding the simulation/API cases. |
-| Persistence | Process-local only; sessions and reports are lost when the API restarts. No database or hosted persistence was configured. |
+| Persistence | At that point process-local only; this limitation was addressed in the Day 3 persistence work below. |
+
+## Day 3 PostgreSQL persistence
+
+Date: 2026-11-27 (Asia/Kolkata).
+
+Added a `SessionRepository` boundary with an in-memory implementation and a PostgreSQL adapter. PostgreSQL stores session replay state, per-tick snapshot JSON, typed JSONB telemetry values, warning states, scenario events with scheduled event ticks, and saved reports. Added migration `001_initial.sql`, a loopback-only Compose database with named volume, optional `DATABASE_URL`, startup migration, and UI/API durability labels. Catalog definitions and thresholds remain in the reviewed fictional JSON seed.
+
+| Check | Observed result |
+|---|---|
+| Review Agent test design review | Approved API-SIM-04, SIM-08, and revised API-01 durability contract assertion before final execution; no remaining findings. |
+| `npm.cmd run typecheck` | Passed. |
+| `npm.cmd run build` | Passed; Vite web build and portable API bundle completed. |
+| `npm.cmd test` | Passed: 71 tests across 3 files (553ms). The initial run had two health schema failures; schema and assertion were corrected, reviewed, and the full suite passed on rerun. |
+| `git diff --check` | Passed; only Git line-ending conversion warnings were printed. |
+| Live PostgreSQL integration | Not run: Docker/Compose and `psql` are unavailable in this environment. Migration execution, restart durability, and direct SQL assertions remain pending. |
+
+The API defaults to process memory until a local PostgreSQL service is configured and `DATABASE_URL` is set. No real vehicle data or thresholds are asserted, and no hosted database was provisioned.

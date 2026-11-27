@@ -4,6 +4,8 @@
 - Date: 2026-11-26
 - Builds on: ADR-002
 
+> Persistence decision update: ADR-004 supersedes this record's temporary in-memory-only storage choice. The in-memory adapter remains the no-database fallback; PostgreSQL is now available for durable local sessions and reports.
+
 ## Context
 
 The catalog foundation had vehicle capabilities and scenario descriptions but no running simulation. The next product slice needs to demonstrate a repeatable flow from a selected fictional profile to telemetry, a fault warning, and a saved report without requiring paid APIs or a database.
