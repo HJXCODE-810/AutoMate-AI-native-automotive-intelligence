@@ -1,12 +1,12 @@
 # Foundation test cases and review gate
 
-Date: 2026-11-25. Status: Day 2 foundation suite approved and executed; simulation cases are pending review and have not been executed.
+Date: 2026-11-27. Status: Day 2/Day 3 automated simulation and repository-boundary cases are reviewed and executed; live PostgreSQL integration cases remain unexecuted.
 
 ## Required workflow
 
 Author test cases -> Review Agent checks test design -> resolve findings -> review any materially changed cases -> execute approved cases -> record actual results. A source review or a passing typecheck does not establish passing behavioral tests.
 
-The approved cases below cover the Day 2 local foundation. The next-phase cases required for seeded telemetry, scenario execution, warnings, session APIs, and reports must be authored and reviewed before execution. Durable persistence, authentication, live AI, and deployment remain out of scope.
+The approved cases below cover the Day 2 local foundation and Day 3 deterministic simulation. Database behavior requires PostgreSQL integration coverage before it can be claimed verified. Authentication, live AI, and deployment remain out of scope.
 
 ## Automated cases
 
@@ -39,6 +39,8 @@ The approved cases below cover the Day 2 local foundation. The next-phase cases 
 | API-SIM-01 | Session lifecycle | Session creation returns a synthetic capability-filtered snapshot; advance and GET return current tick | `apps/api/src/index.test.ts` |
 | API-SIM-02 | Saved report history | Saving returns an in-memory report and adds it to report history; session records saved status | Same |
 | API-SIM-03 | Session API errors | Invalid profile/scenario/seed, invalid or excessive advances, and missing sessions return errors | Same |
+| API-SIM-04 | Repository boundary | A second API handler using the same repository can read the saved current session after create and advance | Same |
+| SIM-08 | Crossed event tick | Advancing from tick 0 past a scheduled event records its configured `atTick`, not the later observed tick | `packages/simulation/src/index.test.ts` |
 
 ## Browser acceptance cases (manual, no Playwright dependency yet)
 
@@ -54,11 +56,20 @@ The approved cases below cover the Day 2 local foundation. The next-phase cases 
 | WEB-08 | Inspect detail/scenario presentation | Units and fictional range notice are visible; applicable scenarios are selectable in the simulation panel |
 | WEB-09 | Start normal sessions for petrol, EV, and diesel using a fixed seed | Supported telemetry appears; unsupported powertrain signals remain absent; same replay inputs reproduce the same values |
 | WEB-10 | Run EPS and low-voltage scenarios, advancing to their fault ticks | The matching simulated indicators and deterministic explanations activate; unrelated indicators remain clear |
-| WEB-11 | Save a report and inspect confirmation | UI confirms save and identifies the process-local restart limitation |
+| WEB-11 | Save a report and inspect confirmation | UI confirms save and identifies the configured durability mode |
+
+## Database cases planned (not yet exercised)
+
+| ID | Area | Expected outcome | Status |
+|---|---|---|---|
+| DB-01 | Migration | Against a disposable empty PostgreSQL database, start the migration twice and assert `schema_migrations` contains exactly one `001_initial` row and all six application tables exist | Needs live PostgreSQL |
+| DB-02 | Durable session lifecycle | Create an EPS scenario with seed 42, advance to tick 10, stop and recreate the API/repository using the same DB, then assert GET returns the complete same tick-10 snapshot; advance the restored session one tick and compare its full deterministic tick-11 snapshot with a fresh replay using the same profile/scenario/seed/session ID | Needs live PostgreSQL |
+| DB-03 | Telemetry and indicators | For DB-02 session/tick 10, query `telemetry_readings` and `indicator_states`; assert each returned supported signal has one matching value row and `steering.eps`/`warn-eps-assist-event-v1` is active with the API explanation | Needs live PostgreSQL |
+| DB-04 | Reports/events | Save the DB-02 report, query `session_events` and assert `eps_assist_fault.first_tick = 8` despite advancing directly to tick 10, restart API/repository, then assert report history contains the same report ID and snapshot | Needs live PostgreSQL |
 
 ## Review record
 
-Simulation cases SIM-01 through SIM-07 and API-SIM-01 through API-SIM-03 were authored on 2026-11-26 and approved by a static Review Agent on 2026-11-26. Review findings added fractional-advance cases and warning hysteresis coverage. The first test run found a case-sensitive message regex mismatch; the corrected assertion was reviewed and approved before the final run. WEB-09 through WEB-11 are proposed manual acceptance cases and remain pending review.
+Simulation cases SIM-01 through SIM-07 and API-SIM-01 through API-SIM-03 were authored on 2026-11-26 and approved by a static Review Agent on 2026-11-26. Review findings added fractional-advance cases and warning hysteresis coverage. The first test run found a case-sensitive message regex mismatch; the corrected assertion was reviewed and approved before the final run. API-SIM-04 and SIM-08 were approved by the Review Agent on 2026-11-27. API-01 health assertions were updated after adding durability to the response schema; the Review Agent approved the corrected expectation before rerun. Database cases DB-01 through DB-04 are specified but await an available PostgreSQL instance for execution. WEB-09 through WEB-11 are proposed manual acceptance cases and remain pending review.
 
 First static review completed by Review Agent on 2026-11-25; no cases executed. Findings: scenario negative assertions needed specific errors and a valid baseline; lower-threshold clearing rules needed coverage; summary counts needed comparison with all three profile detail responses; stale-response browser coverage needed controlled response ordering. A second static review caught a fixture dependency error: replacing all warning rules removed definitions needed by retained event scenarios. That fixture was corrected without executing tests.
 
@@ -89,3 +100,13 @@ Simulation/API test execution on 2026-11-26:
 - `npm.cmd test`: final run passed, 69 tests across three files (594ms reported by Vitest). This includes the approved SIM-01 through SIM-07 and API-SIM-01 through API-SIM-03 cases.
 - First run: 68 passed and one failed because the SIM-05 regex was case-sensitive against a capitalized `Seed` error. The expectation was corrected to `/seed/i`, reviewed and approved, then the complete suite passed.
 - `npm.cmd run typecheck`: passed after adding the simulation/API cases.
+
+Database/repository test execution on 2026-11-27:
+
+- The Review Agent approved API-SIM-04 (shared repository behavior), SIM-08 (crossed event preserves scheduled `atTick`), and the revised API-01 durability contract assertion before execution.
+- First `npm.cmd test` attempt: 69 passed and two health route assertions failed because the newly returned `durability` field was missing from the strict shared health schema. The schema and expectation were updated, reviewed, and approved before rerunning.
+- Final `npm.cmd test`: passed, 71 tests across three files (553ms reported by Vitest).
+- `npm.cmd run typecheck`: passed after repository, event tick, and durability schema changes.
+- `npm.cmd run build`: passed, including typecheck, Vite production build, and portable API bundle.
+- `git diff --check`: passed; Git reported only line-ending conversion warnings.
+- PostgreSQL integration cases DB-01 through DB-04 were not executed: this environment has neither Docker Compose/Docker nor `psql`; live migration, restart durability, and SQL row assertions remain unverified.

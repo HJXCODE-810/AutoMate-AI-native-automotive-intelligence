@@ -8,7 +8,7 @@ export type SimulationSnapshot = {
   source: "synthetic"; notice: string;
 };
 
-export type SimulationSession = { catalog: Catalog; profile: VehicleProfile; scenarioId: string; seed: number; id: string; tick: number; events: string[]; priorIndicators: Map<string, boolean>; savedReport: boolean };
+export type SimulationSession = { catalog: Catalog; profile: VehicleProfile; scenarioId: string; seed: number; id: string; tick: number; events: string[]; eventTicks: Map<string, number>; priorIndicators: Map<string, boolean>; savedReport: boolean };
 
 function hashSeed(seed: number, text: string) {
   let hash = (seed ^ 0x9e3779b9) >>> 0;
@@ -39,7 +39,7 @@ export function createSimulationSession(catalog: Catalog, profileId: string, sce
   if (!scenario) throw new Error("Scenario not found");
   if (!scenario.profiles.includes(profileId)) throw new Error("Scenario is unsupported for this vehicle profile");
   if (!Number.isSafeInteger(seed) || seed < 0 || seed > 2147483647) throw new Error("Seed must be a nonnegative 32-bit integer");
-  return { catalog, profile, scenarioId, seed, id, tick: 0, events: [], priorIndicators: new Map(), savedReport: false };
+  return { catalog, profile, scenarioId, seed, id, tick: 0, events: [], eventTicks: new Map(), priorIndicators: new Map(), savedReport: false };
 }
 
 export function advanceSimulation(session: SimulationSession, ticks: number): SimulationSnapshot {
@@ -57,7 +57,10 @@ export function getSimulationSnapshot(session: SimulationSession): SimulationSna
     values[signalId] = seededValue(session.seed, session.tick, signal);
   }
   for (const action of scenario.actions) {
-    if (action.type === "emit_event" && action.atTick <= session.tick && !session.events.includes(action.eventType)) session.events.push(action.eventType);
+    if (action.type === "emit_event" && action.atTick <= session.tick && !session.events.includes(action.eventType)) {
+      session.events.push(action.eventType);
+      session.eventTicks.set(action.eventType, action.atTick);
+    }
     if (action.type === "set_signal" && action.atTick <= session.tick) values[action.signalId] = action.value;
     if (action.type === "ramp_signal" && action.atTick <= session.tick) {
       const progress = Math.min(1, Math.max(0, (session.tick - action.atTick) / action.overTicks));
